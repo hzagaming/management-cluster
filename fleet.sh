@@ -30,6 +30,7 @@ start_node() {
       sleep 5
     done" >/dev/null 2>&1 &
   echo $! > "$state/supervisor.pid"
+  printf '{"pid": %s, "repo": "%s", "interval": %s, "mode": "pre2000"}\n' "$!" "$repo" "$INTERVAL" > "$state/auto.json"
   echo "zone$n 已启动 (pid $!)"
 }
 
