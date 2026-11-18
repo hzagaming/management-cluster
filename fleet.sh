@@ -8,7 +8,12 @@ ROOT="/Users/charliezhong/Documents/DSH-Test"
 TOOL="$ROOT/Automation-customize-commit-V2.19.196-repaired"
 STATE="$TOOL/.state"
 INTERVAL="${INTERVAL:-30}"
+DATE_FROM="${DATE_FROM:-1970-01-01}"
+DATE_TO="${DATE_TO:-2000-01-01}"
 NODES="1 2 3"
+CMD="${1:-status}"
+shift || true
+if [ $# -gt 0 ]; then NODES="$*"; fi
 
 node_repo() { echo "$ROOT/Lingchuanzone$1"; }
 node_state() { echo "$STATE/zone$1"; }
@@ -25,12 +30,12 @@ start_node() {
     while true; do
       COMMIT_AUTO_HOME='$state' python3 -m commit_auto.auto \
         --repo '$repo' --interval $INTERVAL --push-every 1 \
-        --date-from 1970-01-01 --date-to 2000-01-01 >> '$state/auto.out' 2>&1
+        --date-from '$DATE_FROM' --date-to '$DATE_TO'  >> '$state/auto.out' 2>&1
       echo \"\$(date +%H:%M:%S) 进程退出，5 秒后重启\" >> '$state/auto.out'
       sleep 5
     done" >/dev/null 2>&1 &
   echo $! > "$state/supervisor.pid"
-  printf '{"pid": %s, "repo": "%s", "interval": %s, "mode": "pre2000"}\n' "$!" "$repo" "$INTERVAL" > "$state/auto.json"
+  printf '{"pid": %s, "repo": "%s", "interval": %s, "mode": "range", "from": "'$DATE_FROM'", "to": "'$DATE_TO'"}\n' "$!" "$repo" "$INTERVAL" > "$state/auto.json"
   echo "zone$n 已启动 (pid $!)"
 }
 
@@ -82,7 +87,7 @@ doctor_node() {
     "$auto" "$last" "$age" "$size"
 }
 
-case "${1:-status}" in
+case "$CMD" in
   start)  for n in $NODES; do start_node "$n"; done ;;
   stop)   for n in $NODES; do stop_node "$n"; done ;;
   status) for n in $NODES; do status_node "$n"; done ;;
